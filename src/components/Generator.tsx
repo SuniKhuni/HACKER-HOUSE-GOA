@@ -299,12 +299,12 @@ export default function Generator() {
         </div>
 
         {/* Global Action Reset Links */}
-        <div className="flex justify-center items-center gap-4 w-full max-w-[500px] text-[11px] font-mono text-[#3a3a3a] select-none">
+        <div className="flex justify-center items-center gap-4 w-full max-w-[500px] text-[11.5px] font-mono text-[#888] select-none pt-1">
           <button
             type="button"
             onClick={handleResetActivePhoto}
             disabled={!members[activeMemberIndex]?.imageUrl}
-            className="hover:text-[#888] disabled:opacity-30 disabled:hover:text-[#3a3a3a] cursor-pointer transition-colors"
+            className="hover:text-amber-400 disabled:opacity-30 disabled:hover:text-[#888] cursor-pointer transition-colors"
           >
             Reset Photo
           </button>
@@ -312,7 +312,7 @@ export default function Generator() {
           <button
             type="button"
             onClick={handleResetTemplate}
-            className="hover:text-[#888] cursor-pointer transition-colors"
+            className="hover:text-white cursor-pointer transition-colors"
           >
             Reset Template
           </button>
