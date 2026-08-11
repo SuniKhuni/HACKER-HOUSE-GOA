@@ -29,12 +29,12 @@ export default function ExportButtons({
   const [shareMessage, setShareMessage] = useState<string | null>(null);
 
   const getExportCaption = () => {
-    const credit = `\n\nDesigned by ${CREATOR_X} for HHGoa’26 | 2:47Pm (${HH_GOA_X}) #HackerHouseGoa #FrameInGoa`;
-    if (templateType === 'team') {
-      const teamText = teamName ? `Team ${teamName}` : 'Our team';
-      return `Proudly presenting the ${teamText} ID card from Hacker House Goa 2026! Let's build!${credit}`;
-    }
-    return `Just built my Builder ID for Hacker House Goa 2026! Ready to hack.${credit}`;
+    const credit = `Designed by ${CREATOR_X} for HHGoa’26 | 2:47Pm (${HH_GOA_X}) #HackerHouseGoa #FrameInGoa`;
+    const intro = templateType === 'team'
+      ? (teamName ? `Just built our Builder ID for Team ${teamName} at Hacker House Goa 2026! Ready to hack.` : `Just built our Builder ID for Hacker House Goa 2026! Ready to hack.`)
+      : `Just built my Builder ID for Hacker House Goa 2026! Ready to hack.`;
+
+    return `${intro}\n\ncreate yours using\nhttps://hacker-house-goa-ebon.vercel.app/\n\n${credit}`;
   };
 
   const generateFile = (): { file: File; blob: Blob; downloadBlob: Blob; dataUrl: string } | null => {

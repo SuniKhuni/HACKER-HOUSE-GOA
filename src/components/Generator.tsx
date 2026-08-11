@@ -7,6 +7,7 @@ import { Member, ImageTransform, TemplateConfig } from '../types/generator';
 import { SoloForm, TeamForm } from './Forms';
 import ImageControls from './ImageControls';
 import ExportButtons from './ExportButtons';
+import TypographySelect from './TypographySelect';
 
 // Load CanvasEditor dynamically with ssr: false to prevent Next.js server-side build failures
 const CanvasEditor = dynamic(() => import('./CanvasEditor'), {
@@ -42,7 +43,7 @@ function getDefaultTransform(
 export default function Generator() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('solo_square');
   const [teamName, setTeamName] = useState<string>('');
-  const [selectedFont, setSelectedFont] = useState<string>('Outfit');
+  const [selectedFont, setSelectedFont] = useState<string>('Sora');
   const [activeMemberIndex, setActiveMemberIndex] = useState<number>(0);
   const [previewWidth, setPreviewWidth] = useState<number>(500);
   const previewContainerRef = useRef<HTMLDivElement>(null);
@@ -401,28 +402,13 @@ export default function Generator() {
               </div>
             </div>
 
-            {/* Font selector — styled like reference dropdown */}
+            {/* Custom Typography Selector */}
             <div className="space-y-1.5">
-              <label htmlFor="font-select" className="block text-[11px] font-semibold tracking-wide text-[#999] uppercase">Typography</label>
-              <div className="relative">
-                <select
-                  id="font-select"
-                  value={selectedFont}
-                  onChange={(e) => setSelectedFont(e.target.value)}
-                  className="w-full appearance-none px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/[0.06] hover:border-white/[0.12] focus:border-amber-500/40 focus:outline-none text-[13px] text-[#ccc] font-sans cursor-pointer transition-colors pr-9"
-                >
-                  <option value="Outfit">Sora — Default</option>
-                  <option value="Space Grotesk">Fraunces — Serif</option>
-                  <option value="JetBrains Mono">JetBrains Mono — Dev</option>
-                  <option value="Bungee">Bungee — Bold</option>
-                </select>
-                {/* Dropdown chevron */}
-                <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
-                  <svg className="w-4 h-4 text-[#444]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </div>
-              </div>
+              <label className="block text-[11px] font-semibold tracking-wide text-[#999] uppercase">Typography</label>
+              <TypographySelect
+                value={selectedFont}
+                onChange={(font) => setSelectedFont(font)}
+              />
             </div>
           </div>
         </div>

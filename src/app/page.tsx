@@ -1,10 +1,14 @@
 import Generator from '../components/Generator';
 import ScrollAnimationHero from '../components/ScrollAnimationHero';
 import Footer from '../components/Footer';
+import ApplyButton from '../components/ApplyButton';
 
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
+      {/* TOP RIGHT APPLY BUTTON */}
+      <ApplyButton />
+
       {/* FULL-SCREEN SCROLL HERO */}
       <ScrollAnimationHero generatorId="generator-section" />
 
