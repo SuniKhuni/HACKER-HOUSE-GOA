@@ -332,8 +332,8 @@ export default function Generator() {
       <div className="md:col-span-5 lg:col-span-4 space-y-3">
 
         {/* ── Card 1: Layout & Format ── */}
-        <div className="rounded-2xl bg-black/55 backdrop-blur-2xl border border-white/[0.10] shadow-2xl overflow-hidden">
-          <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-white/[0.08]">
+        <div className="rounded-2xl bg-black/55 backdrop-blur-2xl border border-white/[0.10] shadow-2xl relative z-30">
+          <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-white/[0.08] rounded-t-2xl">
             <svg className="w-4 h-4 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
             </svg>
@@ -414,7 +414,7 @@ export default function Generator() {
         </div>
 
         {/* ── Card 2: Identity Credentials ── */}
-        <div className="rounded-2xl bg-black/55 backdrop-blur-2xl border border-white/[0.10] shadow-2xl overflow-hidden">
+        <div className="rounded-2xl bg-black/55 backdrop-blur-2xl border border-white/[0.10] shadow-2xl overflow-hidden relative z-20">
           <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-white/[0.08]">
             <svg className="w-4 h-4 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />

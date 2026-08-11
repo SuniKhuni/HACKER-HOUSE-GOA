@@ -96,7 +96,7 @@ export default function TypographySelect({ value, onChange }: TypographySelectPr
       {isOpen && (
         <div
           role="listbox"
-          className="absolute z-50 left-0 right-0 mt-2 p-1.5 rounded-2xl bg-[#09120e]/95 backdrop-blur-2xl border border-amber-500/30 shadow-[0_16px_40px_rgba(0,0,0,0.9),0_0_20px_rgba(245,158,11,0.15)] max-h-80 overflow-y-auto space-y-1 scrollbar-thin scrollbar-thumb-amber-500/20"
+          className="absolute z-50 left-0 right-0 top-full mt-2 p-1.5 rounded-2xl bg-[#0b1812]/98 backdrop-blur-2xl border border-amber-500/40 shadow-[0_20px_60px_rgba(0,0,0,0.98),0_0_30px_rgba(245,158,11,0.2)] max-h-80 overflow-y-auto space-y-1"
         >
           {FONT_OPTIONS.map((font) => {
             const isSelected = font.value === value;
