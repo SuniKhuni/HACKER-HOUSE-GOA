@@ -13,7 +13,7 @@ interface ExportButtonsProps {
 }
 
 // Hacker House Goa X handle — update if official handle changes
-const HH_GOA_X = '@HackerHouseGoa';
+const HH_GOA_X = "@247pmstudio";
 const CREATOR_X   = '@Suni_creates';
 
 export default function ExportButtons({
@@ -29,7 +29,7 @@ export default function ExportButtons({
   const [shareMessage, setShareMessage] = useState<string | null>(null);
 
   const getExportCaption = () => {
-    const credit = `\n\nDesigned by ${CREATOR_X} for ${HH_GOA_X} #HackerHouseGoa #FrameInGoa`;
+    const credit = `\n\nDesigned by ${CREATOR_X} for HHGoa’26 | 2:47Pm (${HH_GOA_X}) #HackerHouseGoa #FrameInGoa`;
     if (templateType === 'team') {
       const teamText = teamName ? `Team ${teamName}` : 'Our team';
       return `Proudly presenting the ${teamText} ID card from Hacker House Goa 2026! Let's build!${credit}`;
