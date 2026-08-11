@@ -115,20 +115,34 @@ export default function CanvasEditor({
   };
 
   return (
-    <div className="relative mx-auto rounded-2xl overflow-hidden shadow-2xl bg-zinc-950 border border-emerald-950/50" style={{ width: previewWidth, height: previewHeight }}>
-      {/* Background overlay indicator */}
-      <div className="absolute top-2 left-2 z-10 bg-emerald-950/80 backdrop-blur text-emerald-300 border border-emerald-500/30 text-xs px-2.5 py-1 rounded-md font-mono select-none pointer-events-none">
-        {template.width}×{template.height} Canvas
-      </div>
-
-      <Stage
-        key={selectedFont + "_" + fontsReady + "_" + template.id}
-        ref={stageRef}
-        width={template.width}
-        height={template.height}
-        scaleX={scale}
-        scaleY={scale}
+    /*
+     * IMPORTANT: We intentionally do NOT put scaleX/scaleY on the Konva Stage.
+     * Doing so shrinks the drawing into the top-left corner of a large canvas,
+     * causing exported images to have wrong dimensions/ratio.
+     *
+     * Instead we apply a CSS transform:scale() to the wrapper div for the preview.
+     * The Konva canvas always renders at full template resolution.
+     * Export with pixelRatio:1 gives a perfect pixel-for-pixel image.
+     */
+    <div
+      className="relative mx-auto rounded-2xl overflow-hidden shadow-2xl bg-zinc-950 border border-emerald-950/50"
+      style={{ width: previewWidth, height: previewHeight }}
+    >
+      {/* Scale the Stage element via CSS so the canvas renders at full resolution */}
+      <div
+        style={{
+          width: template.width,
+          height: template.height,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+        }}
       >
+        <Stage
+          key={selectedFont + "_" + fontsReady + "_" + template.id}
+          ref={stageRef}
+          width={template.width}
+          height={template.height}
+        >
         {/* Layer 1: Background */}
         <Layer>
           {backgroundImage ? (
@@ -271,6 +285,7 @@ export default function CanvasEditor({
           })}
         </Layer>
       </Stage>
+      </div>
     </div>
   );
 }

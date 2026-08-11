@@ -4,6 +4,20 @@ import React from 'react';
 import { Member } from '../types/generator';
 import PhotoUploader from './PhotoUploader';
 
+// Reusable dark-UI field
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-[11px] font-semibold tracking-wide text-[#888] uppercase">
+        {label} {required && <span className="text-amber-500">*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+const inputCls = `w-full px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/[0.07] hover:border-white/[0.14] focus:border-amber-500/50 focus:outline-none font-sans text-[#e0e0e0] text-sm placeholder-[#555] transition-colors backdrop-blur-sm`;
+
 interface SoloFormProps {
   member: Member;
   teamName: string;
@@ -11,72 +25,51 @@ interface SoloFormProps {
   onUpdateTeamName: (name: string) => void;
 }
 
-export function SoloForm({
-  member,
-  teamName,
-  onUpdateMember,
-  onUpdateTeamName,
-}: SoloFormProps) {
+export function SoloForm({ member, teamName, onUpdateMember, onUpdateTeamName }: SoloFormProps) {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Name */}
-        <div className="space-y-1.5">
-          <label htmlFor="solo-name" className="block text-sm font-semibold text-emerald-400 font-sans">
-            Name <span className="text-amber-400">*</span>
-          </label>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Name" required>
           <input
             id="solo-name"
             type="text"
-            required
-            placeholder="e.g. Siddharth Fernandes"
+            placeholder="Siddharth Fernandes"
             value={member.name}
             onChange={(e) => onUpdateMember({ name: e.target.value })}
-            className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-emerald-950/60 focus:border-amber-400 focus:outline-none font-sans text-emerald-100 text-sm"
+            className={inputCls}
           />
-        </div>
-
-        {/* Team Name */}
-        <div className="space-y-1.5">
-          <label htmlFor="solo-team" className="block text-sm font-semibold text-emerald-400 font-sans">
-            Team Name
-          </label>
+        </Field>
+        <Field label="Team Name">
           <input
             id="solo-team"
             type="text"
-            placeholder="e.g. Goa Hackers"
+            placeholder="Goa Hackers"
             value={teamName}
             onChange={(e) => onUpdateTeamName(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-emerald-950/60 focus:border-amber-400 focus:outline-none font-sans text-emerald-100 text-sm"
+            className={inputCls}
           />
-        </div>
+        </Field>
       </div>
 
-      {/* Role / Stack */}
-      <div className="space-y-1.5">
-        <label htmlFor="solo-role" className="block text-sm font-semibold text-emerald-400 font-sans">
-          Role / Stack <span className="text-amber-400">*</span>
-        </label>
+      <Field label="Role / Stack" required>
         <input
           id="solo-role"
           type="text"
-          required
-          placeholder="e.g. Fullstack Dev / Next.js / Rust"
+          placeholder="Fullstack Dev / Next.js / Rust"
           value={member.role}
           onChange={(e) => onUpdateMember({ role: e.target.value })}
-          className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-emerald-950/60 focus:border-amber-400 focus:outline-none font-sans text-emerald-100 text-sm"
+          className={inputCls}
         />
-      </div>
+      </Field>
 
-      {/* Upload Photo */}
-      <div className="pt-2">
+      <Field label="Photo">
         <PhotoUploader
           label="Upload Photo"
           hasImage={!!member.imageUrl}
           onImageUploaded={(file, url) => onUpdateMember({ imageFile: file, imageUrl: url })}
           onClear={() => onUpdateMember({ imageFile: null, imageUrl: null })}
         />
-      </div>
+      </Field>
     </div>
   );
 }
@@ -103,140 +96,105 @@ export function TeamForm({
   onUpdateMemberCount,
 }: TeamFormProps) {
   return (
-    <div className="space-y-5">
-      {/* Number of Members Selector */}
-      <div className="space-y-2">
-        <span className="block text-sm font-semibold text-emerald-400 font-sans">
-          How many members?
-        </span>
-        <div className="flex space-x-3">
-          <button
-            type="button"
-            onClick={() => onUpdateMemberCount(2)}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
-              memberCount === 2
-                ? 'bg-amber-400 border-amber-400 text-emerald-950 glow-gold'
-                : 'bg-zinc-900 border-emerald-950/60 text-emerald-300 hover:border-emerald-500/20'
-            }`}
-            aria-label="Two members mode"
-          >
-            👥 2 MEMBERS
-          </button>
-          <button
-            type="button"
-            onClick={() => onUpdateMemberCount(3)}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
-              memberCount === 3
-                ? 'bg-amber-400 border-amber-400 text-emerald-950 glow-gold'
-                : 'bg-zinc-900 border-emerald-950/60 text-emerald-300 hover:border-emerald-500/20'
-            }`}
-            aria-label="Three members mode"
-          >
-            👥👥 3 MEMBERS
-          </button>
+    <div className="space-y-4">
+      {/* Member count segmented control */}
+      <div className="space-y-1.5">
+        <label className="block text-[11px] font-semibold tracking-wide text-[#888] uppercase">
+          Team Size
+        </label>
+        <div className="flex p-1 rounded-xl bg-black/30 border border-white/[0.06] gap-1">
+          {[2, 3].map((count) => (
+            <button
+              key={count}
+              type="button"
+              onClick={() => onUpdateMemberCount(count)}
+              className={`flex-1 py-2 rounded-lg text-[12px] font-bold tracking-widest transition-all cursor-pointer ${
+                memberCount === count
+                  ? 'bg-amber-500 text-[#0a0a0a] shadow-[0_2px_8px_rgba(245,158,11,0.35)]'
+                  : 'text-[#666] hover:text-[#aaa]'
+              }`}
+            >
+              {count} BUILDERS
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Team Name */}
-      <div className="space-y-1.5">
-        <label htmlFor="team-name-input" className="block text-sm font-semibold text-emerald-400 font-sans">
-          Team Name <span className="text-amber-400">*</span>
-        </label>
+      {/* Team name */}
+      <Field label="Team Name" required>
         <input
           id="team-name-input"
           type="text"
-          required
-          placeholder="e.g. Goan Coders Alliance"
+          placeholder="Goan Coders Alliance"
           value={teamName}
           onChange={(e) => onUpdateTeamName(e.target.value)}
-          className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-emerald-950/60 focus:border-amber-400 focus:outline-none font-sans text-emerald-100 text-sm"
+          className={inputCls}
         />
-      </div>
+      </Field>
 
-      {/* Accordion / Tab headers for Members */}
-      <div className="space-y-4 pt-2">
+      {/* Member accordion */}
+      <div className="space-y-2 pt-1">
         {members.slice(0, memberCount).map((member, idx) => {
           const isSelected = activeMemberIndex === idx;
-
           return (
             <div
               key={member.id}
-              className={`p-4 rounded-xl border transition-all ${
-                isSelected
-                  ? 'bg-zinc-900/80 border-amber-400'
-                  : 'bg-zinc-950/40 border-emerald-950/60 hover:border-emerald-500/20'
+              className={`rounded-xl border transition-all overflow-hidden ${
+                isSelected ? 'border-amber-500/30 bg-white/[0.06]' : 'border-white/[0.04] bg-white/[0.02] hover:border-white/[0.08]'
               }`}
             >
-              {/* Member title bar */}
-              <div
-                className="flex items-center justify-between cursor-pointer"
+              {/* Accordion header */}
+              <button
+                type="button"
                 onClick={() => onSelectActiveMember(idx)}
+                className="w-full flex items-center justify-between px-4 py-3 cursor-pointer"
               >
-                <div className="flex items-center space-x-2">
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono font-bold ${
-                    isSelected ? 'bg-amber-400 text-emerald-950' : 'bg-emerald-950 text-emerald-300'
+                <div className="flex items-center gap-3">
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-mono font-bold border transition-colors ${
+                    isSelected ? 'bg-amber-500 border-amber-500 text-[#0a0a0a]' : 'bg-transparent border-[#2a2a2a] text-[#666]'
                   }`}>
                     {idx + 1}
                   </span>
-                  <span className="font-semibold text-sm text-emerald-100">
+                  <span className="text-[13px] font-semibold text-[#ccc]">
                     {member.name || `Member ${idx + 1}`}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  className="text-xs font-mono font-semibold text-emerald-400 hover:text-amber-400 transition-colors"
-                  aria-label={`Configure member ${idx + 1}`}
-                >
-                  {isSelected ? 'Editing' : 'Edit Info'}
-                </button>
-              </div>
+                  <span className={`text-[11px] font-mono transition-colors ${isSelected ? 'text-amber-400' : 'text-[#777] hover:text-[#aaa]'}`}>
+                  {isSelected ? 'Editing' : 'Edit'}
+                </span>
+              </button>
 
-              {/* Collapsed/Expanded inputs */}
+              {/* Expanded inputs */}
               {isSelected && (
-                <div className="mt-4 space-y-4 pt-3 border-t border-emerald-950/60">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Member Name */}
-                    <div className="space-y-1.5">
-                      <label htmlFor={`member-${idx}-name`} className="block text-xs font-semibold text-emerald-400 font-sans">
-                        Name <span className="text-amber-400">*</span>
-                      </label>
+                <div className="px-4 pb-4 pt-1 space-y-3 border-t border-[#1e1e1e]">
+                  <div className="grid grid-cols-2 gap-3 pt-3">
+                    <Field label="Name" required>
                       <input
                         id={`member-${idx}-name`}
                         type="text"
-                        required
-                        placeholder="e.g. Anand Salgaonkar"
+                        placeholder="Anand Salgaonkar"
                         value={member.name}
                         onChange={(e) => onUpdateMember(idx, { name: e.target.value })}
-                        className="w-full px-3 py-2 rounded-lg bg-zinc-950 border border-emerald-950/60 focus:border-amber-400 focus:outline-none font-sans text-emerald-100 text-xs"
+                        className={inputCls}
                       />
-                    </div>
-
-                    {/* Member Role */}
-                    <div className="space-y-1.5">
-                      <label htmlFor={`member-${idx}-role`} className="block text-xs font-semibold text-emerald-400 font-sans">
-                        Role <span className="text-amber-400">*</span>
-                      </label>
+                    </Field>
+                    <Field label="Role" required>
                       <input
                         id={`member-${idx}-role`}
                         type="text"
-                        required
-                        placeholder="e.g. Smart Contract Auditor"
+                        placeholder="Smart Contract Dev"
                         value={member.role}
                         onChange={(e) => onUpdateMember(idx, { role: e.target.value })}
-                        className="w-full px-3 py-2 rounded-lg bg-zinc-950 border border-emerald-950/60 focus:border-amber-400 focus:outline-none font-sans text-emerald-100 text-xs"
+                        className={inputCls}
                       />
-                    </div>
+                    </Field>
                   </div>
-
-                  {/* Photo Uploader */}
-                  <div className="pt-1">
-                    <PhotoUploader
-                      label={`Photo for Member ${idx + 1}`}
-                      hasImage={!!member.imageUrl}
-                      onImageUploaded={(file, url) => onUpdateMember(idx, { imageFile: file, imageUrl: url })}
-                      onClear={() => onUpdateMember(idx, { imageFile: null, imageUrl: null })}
-                    />
-                  </div>
+                  <PhotoUploader
+                    label={`Photo — Member ${idx + 1}`}
+                    hasImage={!!member.imageUrl}
+                    onImageUploaded={(file, url) => onUpdateMember(idx, { imageFile: file, imageUrl: url })}
+                    onClear={() => onUpdateMember(idx, { imageFile: null, imageUrl: null })}
+                  />
                 </div>
               )}
             </div>

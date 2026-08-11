@@ -269,9 +269,9 @@ export default function Generator() {
     .every((m) => !!m.name.trim() && !!m.role.trim());
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-      {/* LEFT COLUMN: LIVE CANVAS PREVIEW */}
-      <div className="lg:col-span-6 xl:col-span-7 flex flex-col items-center space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
+      {/* LEFT COLUMN: LIVE CANVAS PREVIEW & EXPORT ACTIONS */}
+      <div className="md:col-span-7 lg:col-span-8 flex flex-col items-center space-y-4">
         <div ref={previewContainerRef} className="w-full flex justify-center items-center">
           <CanvasEditor
             template={activeTemplate}
@@ -286,140 +286,180 @@ export default function Generator() {
           />
         </div>
 
-        {/* Global Action Reset Buttons */}
-        <div className="flex flex-wrap justify-center gap-3 w-full max-w-md px-4">
+        {/* Export and Share Actions */}
+        <div className="w-full max-w-[500px] px-1">
+          <ExportButtons
+            stageRef={stageRef}
+            templateScale={previewWidth / activeTemplate.width}
+            templateType={activeTemplate.type}
+            teamName={teamName}
+            hasPhotos={hasPhotos}
+            hasNames={hasNames}
+          />
+        </div>
+
+        {/* Global Action Reset Links */}
+        <div className="flex justify-center items-center gap-4 w-full max-w-[500px] text-[11px] font-mono text-[#3a3a3a] select-none">
           <button
             type="button"
             onClick={handleResetActivePhoto}
             disabled={!members[activeMemberIndex]?.imageUrl}
-            className="flex-1 min-w-[120px] py-2 px-3 rounded-xl border border-emerald-800/60 bg-emerald-950/20 hover:bg-emerald-950/40 text-emerald-300 font-mono text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="hover:text-[#888] disabled:opacity-30 disabled:hover:text-[#3a3a3a] cursor-pointer transition-colors"
           >
             Reset Photo
           </button>
+          <span>·</span>
           <button
             type="button"
             onClick={handleResetTemplate}
-            className="flex-1 min-w-[120px] py-2 px-3 rounded-xl border border-emerald-800/60 bg-emerald-950/20 hover:bg-emerald-950/40 text-emerald-300 font-mono text-xs font-semibold transition-colors"
+            className="hover:text-[#888] cursor-pointer transition-colors"
           >
             Reset Template
           </button>
+          <span>·</span>
           <button
             type="button"
             onClick={handleStartOver}
-            className="flex-1 min-w-[120px] py-2 px-3 rounded-xl border border-rose-950/80 bg-rose-950/20 hover:bg-rose-950/40 text-rose-300 font-mono text-xs font-semibold transition-colors"
+            className="hover:text-rose-400 cursor-pointer transition-colors"
           >
             Start Over
           </button>
         </div>
       </div>
 
-      {/* RIGHT COLUMN: EDITOR CONTROLS & FORMS */}
-      <div className="lg:col-span-6 xl:col-span-5 space-y-6">
-        {/* Step 1: Mode & Template Selection */}
-        <div className="p-6 rounded-2xl glass-panel border-emerald-950/50 space-y-4 shadow-xl">
-          <div className="space-y-1">
-            <h2 className="text-emerald-400 font-semibold font-mono text-xs uppercase tracking-wider">
-              Step 1: Choose Layout Mode
-            </h2>
-            <div className="flex bg-zinc-950 p-1 rounded-xl border border-emerald-950">
-              <button
-                type="button"
-                onClick={() => handleTemplateChange('solo_square')}
-                className={`flex-1 py-2 rounded-lg text-sm font-bold font-sans transition-all ${
-                  isSolo
-                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-md'
-                    : 'text-emerald-400 hover:text-emerald-200'
-                }`}
-              >
-                SOLO
-              </button>
-              <button
-                type="button"
-                onClick={() => handleTemplateChange('team_two')}
-                className={`flex-1 py-2 rounded-lg text-sm font-bold font-sans transition-all ${
-                  !isSolo
-                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-md'
-                    : 'text-emerald-400 hover:text-emerald-200'
-                }`}
-              >
-                TEAM
-              </button>
-            </div>
+      {/* RIGHT COLUMN: DARK UI CARDS */}
+      <div className="md:col-span-5 lg:col-span-4 space-y-3">
+
+        {/* ── Card 1: Layout & Format ── */}
+        <div className="rounded-2xl bg-black/55 backdrop-blur-2xl border border-white/[0.10] shadow-2xl overflow-hidden">
+          <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-white/[0.08]">
+            <svg className="w-4 h-4 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+            </svg>
+            <span className="text-[13px] font-semibold text-[#ddd] tracking-wide">Layout & Format</span>
           </div>
 
-          {/* Sub Template Carousel */}
-          <div className="space-y-2">
-            <span className="block text-xs font-mono text-emerald-400/80">
-              Select Overlay Frame Format:
-            </span>
-            <div className="grid grid-cols-2 gap-3">
-              {TEMPLATES.filter((t) => (isSolo ? t.type === 'solo' : t.type === 'team')).map((t) => (
+          <div className="px-5 py-4 space-y-4">
+            {/* Solo / Team segmented control */}
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-semibold tracking-wide text-[#999] uppercase">Mode</label>
+              <div className="flex p-1 rounded-xl bg-black/30 border border-white/[0.06] gap-1">
                 <button
-                  key={t.id}
                   type="button"
-                  onClick={() => handleTemplateChange(t.id)}
-                  className={`p-3 rounded-xl border text-left transition-all ${
-                    selectedTemplateId === t.id
-                      ? 'border-amber-400 bg-amber-400/5 text-amber-300'
-                      : 'border-emerald-950/60 bg-zinc-950/50 text-emerald-300 hover:border-emerald-500/20'
+                  onClick={() => handleTemplateChange('solo_square')}
+                  className={`flex-1 py-2 rounded-lg text-[12px] font-bold tracking-widest transition-all cursor-pointer ${
+                    isSolo
+                      ? 'bg-amber-500 text-[#0a0a0a] shadow-[0_2px_8px_rgba(245,158,11,0.35)]'
+                      : 'text-[#555] hover:text-[#aaa]'
                   }`}
                 >
-                  <p className="text-xs font-bold font-sans">{t.name}</p>
-                  <p className="text-[10px] font-mono text-emerald-500 mt-0.5">
-                    {t.width}×{t.height} px
-                  </p>
+                  SOLO
                 </button>
-              ))}
+                <button
+                  type="button"
+                  onClick={() => handleTemplateChange('team_two')}
+                  className={`flex-1 py-2 rounded-lg text-[12px] font-bold tracking-widest transition-all cursor-pointer ${
+                    !isSolo
+                      ? 'bg-amber-500 text-[#0a0a0a] shadow-[0_2px_8px_rgba(245,158,11,0.35)]'
+                      : 'text-[#555] hover:text-[#aaa]'
+                  }`}
+                >
+                  TEAM
+                </button>
+              </div>
+            </div>
+
+            {/* Frame format grid */}
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-semibold tracking-wide text-[#999] uppercase">Frame Format</label>
+              <div className="grid grid-cols-2 gap-2">
+                {TEMPLATES.filter((t) => (isSolo ? t.type === 'solo' : t.type === 'team')).map((t, idx) => {
+                  const isActive = selectedTemplateId === t.id;
+                  // First button: amber tinted — Second button: indigo/slate tinted
+                  const activeStyle = isActive
+                    ? (idx === 0
+                      ? 'border-amber-500/70 bg-amber-500/12 shadow-[inset_0_0_0_1px_rgba(245,158,11,0.2)]'
+                      : 'border-indigo-400/60 bg-indigo-500/10 shadow-[inset_0_0_0_1px_rgba(99,102,241,0.15)]')
+                    : (idx === 0
+                      ? 'border-amber-500/10 bg-amber-500/[0.03] hover:border-amber-500/25'
+                      : 'border-indigo-500/10 bg-indigo-500/[0.03] hover:border-indigo-400/25');
+                  const textActive = isActive
+                    ? (idx === 0 ? 'text-amber-400' : 'text-indigo-300')
+                    : (idx === 0 ? 'text-amber-500/50 group-hover:text-amber-400/80' : 'text-indigo-400/50 group-hover:text-indigo-300/80');
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => handleTemplateChange(t.id)}
+                      className={`px-3 py-2.5 rounded-xl border text-left transition-all cursor-pointer group ${activeStyle}`}
+                    >
+                      <p className={`text-[12px] font-semibold transition-colors ${textActive}`}>{t.name}</p>
+                      <p className="text-[10px] font-mono text-[#444] mt-0.5">{t.width}×{t.height}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Font selector — styled like reference dropdown */}
+            <div className="space-y-1.5">
+              <label htmlFor="font-select" className="block text-[11px] font-semibold tracking-wide text-[#999] uppercase">Typography</label>
+              <div className="relative">
+                <select
+                  id="font-select"
+                  value={selectedFont}
+                  onChange={(e) => setSelectedFont(e.target.value)}
+                  className="w-full appearance-none px-3.5 py-2.5 rounded-xl bg-black/30 border border-white/[0.06] hover:border-white/[0.12] focus:border-amber-500/40 focus:outline-none text-[13px] text-[#ccc] font-sans cursor-pointer transition-colors pr-9"
+                >
+                  <option value="Outfit">Sora — Default</option>
+                  <option value="Space Grotesk">Fraunces — Serif</option>
+                  <option value="JetBrains Mono">JetBrains Mono — Dev</option>
+                  <option value="Bungee">Bungee — Bold</option>
+                </select>
+                {/* Dropdown chevron */}
+                <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                  <svg className="w-4 h-4 text-[#444]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* Font Selector Control */}
-          <div className="space-y-2">
-            <label htmlFor="font-select" className="block text-xs font-mono text-emerald-400/80">
-              Select Typography Font Style:
-            </label>
-            <select
-              id="font-select"
-              value={selectedFont}
-              onChange={(e) => setSelectedFont(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-emerald-950/60 focus:border-amber-400 focus:outline-none font-mono text-xs text-emerald-300"
-            >
-              <option value="Outfit">Outfit (Clean Geometry)</option>
-              <option value="Space Grotesk">Space Grotesk (Tech Modern)</option>
-              <option value="JetBrains Mono">JetBrains Mono (Developer Mono)</option>
-              <option value="Bungee">Bungee (Creative Bold)</option>
-            </select>
+        {/* ── Card 2: Identity Credentials ── */}
+        <div className="rounded-2xl bg-black/55 backdrop-blur-2xl border border-white/[0.10] shadow-2xl overflow-hidden">
+          <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-white/[0.08]">
+            <svg className="w-4 h-4 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+            </svg>
+            <span className="text-[13px] font-semibold text-[#ddd] tracking-wide">Identity Credentials</span>
+          </div>
+
+          <div className="px-5 py-4">
+            {isSolo ? (
+              <SoloForm
+                member={members[0]}
+                teamName={teamName}
+                onUpdateMember={(updates) => handleUpdateMember(0, updates)}
+                onUpdateTeamName={setTeamName}
+              />
+            ) : (
+              <TeamForm
+                members={members}
+                teamName={teamName}
+                memberCount={activeTemplate.memberCount}
+                activeMemberIndex={activeMemberIndex}
+                onUpdateMember={handleUpdateMember}
+                onUpdateTeamName={setTeamName}
+                onSelectActiveMember={setActiveMemberIndex}
+                onUpdateMemberCount={(count) => handleTemplateChange(count === 2 ? 'team_two' : 'team_three')}
+              />
+            )}
           </div>
         </div>
 
-        {/* Step 2: Information inputs Form */}
-        <div className="p-6 rounded-2xl glass-panel border-emerald-950/50 space-y-4 shadow-xl">
-          <h2 className="text-emerald-400 font-semibold font-mono text-xs uppercase tracking-wider mb-2">
-            Step 2: Enter ID Details
-          </h2>
-          
-          {isSolo ? (
-            <SoloForm
-              member={members[0]}
-              teamName={teamName}
-              onUpdateMember={(updates) => handleUpdateMember(0, updates)}
-              onUpdateTeamName={setTeamName}
-            />
-          ) : (
-            <TeamForm
-              members={members}
-              teamName={teamName}
-              memberCount={activeTemplate.memberCount}
-              activeMemberIndex={activeMemberIndex}
-              onUpdateMember={handleUpdateMember}
-              onUpdateTeamName={setTeamName}
-              onSelectActiveMember={setActiveMemberIndex}
-              onUpdateMemberCount={(count) => handleTemplateChange(count === 2 ? 'team_two' : 'team_three')}
-            />
-          )}
-        </div>
-
-        {/* Step 3: Interactive Transforms slider controls */}
+        {/* ── Card 3: Composition Controls (Conditional) ── */}
         {members[activeMemberIndex]?.imageUrl && (
           <ImageControls
             memberName={
@@ -430,22 +470,6 @@ export default function Generator() {
             onReset={handleResetActivePhoto}
           />
         )}
-
-        {/* Step 4: Export and Share actions */}
-        <div className="p-6 rounded-2xl glass-panel border-emerald-950/50 shadow-xl">
-          <h2 className="text-emerald-400 font-semibold font-mono text-xs uppercase tracking-wider mb-4">
-            Step 3: Download & Share
-          </h2>
-          
-          <ExportButtons
-            stageRef={stageRef}
-            templateScale={previewWidth / activeTemplate.width}
-            templateType={activeTemplate.type}
-            teamName={teamName}
-            hasPhotos={hasPhotos}
-            hasNames={hasNames}
-          />
-        </div>
       </div>
     </div>
   );

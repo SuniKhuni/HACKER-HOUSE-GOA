@@ -10,6 +10,77 @@ interface ImageControlsProps {
   onReset: () => void;
 }
 
+// Individual slider row matching the reference dark-UI design
+function SliderRow({
+  id,
+  label,
+  value,
+  displayValue,
+  min,
+  max,
+  step,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: number;
+  displayValue: string;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <label htmlFor={id} className="text-[11px] font-semibold tracking-wide text-[#aaa] uppercase">
+          {label}
+        </label>
+        <span className="text-[11px] font-mono text-[#bbb] tabular-nums bg-[#1a1a1a] px-2 py-0.5 rounded-md border border-[#2a2a2a]">
+          {displayValue}
+        </span>
+      </div>
+      <div className="relative h-7 flex items-center">
+        {/* Track */}
+        <div className="absolute inset-x-0 h-[3px] rounded-full bg-[#1e1e1e] border border-[#2a2a2a]" />
+        {/* Fill */}
+        <div
+          className="absolute left-0 h-[3px] rounded-full bg-gradient-to-r from-amber-500 to-amber-400 pointer-events-none"
+          style={{ width: `${((value - min) / (max - min)) * 100}%` }}
+        />
+        <input
+          id={id}
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value))}
+          className="relative w-full h-full appearance-none bg-transparent cursor-pointer focus:outline-none
+            [&::-webkit-slider-thumb]:appearance-none
+            [&::-webkit-slider-thumb]:w-4
+            [&::-webkit-slider-thumb]:h-4
+            [&::-webkit-slider-thumb]:rounded-full
+            [&::-webkit-slider-thumb]:bg-white
+            [&::-webkit-slider-thumb]:border-2
+            [&::-webkit-slider-thumb]:border-[#333]
+            [&::-webkit-slider-thumb]:shadow-[0_2px_8px_rgba(0,0,0,0.6)]
+            [&::-webkit-slider-thumb]:transition-transform
+            [&::-webkit-slider-thumb]:hover:scale-110
+            [&::-moz-range-thumb]:w-4
+            [&::-moz-range-thumb]:h-4
+            [&::-moz-range-thumb]:rounded-full
+            [&::-moz-range-thumb]:bg-white
+            [&::-moz-range-thumb]:border-2
+            [&::-moz-range-thumb]:border-[#333]
+            [&::-moz-range-thumb]:shadow-[0_2px_8px_rgba(0,0,0,0.6)]
+          "
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function ImageControls({
   memberName,
   transform,
@@ -17,116 +88,81 @@ export default function ImageControls({
   onReset,
 }: ImageControlsProps) {
   return (
-    <div className="p-4 rounded-xl bg-zinc-900/50 border border-emerald-950/60 space-y-4">
-      <div className="flex items-center justify-between">
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-emerald-400 font-mono">
-          Edit Photo: {memberName || 'Member'}
-        </h4>
+    <div className="rounded-2xl bg-black/55 backdrop-blur-2xl border border-white/[0.10] shadow-2xl overflow-hidden">
+      {/* Card Header */}
+      <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.08]">
+        <div className="flex items-center gap-2.5">
+          {/* Crop / adjust icon */}
+          <svg className="w-4 h-4 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 2v14a2 2 0 0 0 2 2h14" /><path d="M18 22V8a2 2 0 0 0-2-2H2" />
+          </svg>
+          <span className="text-[13px] font-semibold text-[#ddd] tracking-wide">
+            {memberName ? memberName : 'Photo Composition'}
+          </span>
+        </div>
         <button
           type="button"
           onClick={onReset}
-          className="text-xs font-mono text-amber-400 hover:text-amber-300 transition-colors flex items-center space-x-1"
+          className="flex items-center gap-1.5 text-[11px] font-mono text-[#aaa] hover:text-amber-400 transition-colors cursor-pointer px-2.5 py-1 rounded-lg hover:bg-white/[0.06]"
           aria-label="Reset photo position and scale"
         >
-          <span>🔄</span>
-          <span>Reset Transform</span>
+          {/* Reset icon */}
+          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" />
+          </svg>
+          Reset
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Zoom Control */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-xs font-mono text-emerald-300">
-            <label htmlFor="scale-slider">Zoom / Scale</label>
-            <span>{transform.scaleX.toFixed(2)}x</span>
-          </div>
-          <input
+      {/* Sliders */}
+      <div className="px-5 py-4 space-y-5">
+        <div className="grid grid-cols-2 gap-x-5 gap-y-5">
+          <SliderRow
             id="scale-slider"
-            type="range"
-            min="0.1"
-            max="4"
-            step="0.01"
+            label="Zoom"
             value={transform.scaleX}
-            onChange={(e) =>
-              onUpdateTransform({
-                scaleX: parseFloat(e.target.value),
-                scaleY: parseFloat(e.target.value),
-              })
-            }
-            className="w-full h-1.5 bg-emerald-950 rounded-lg appearance-none cursor-pointer accent-amber-400 focus:outline-none"
+            displayValue={`${transform.scaleX.toFixed(2)}×`}
+            min={0.5}
+            max={3}
+            step={0.005}
+            onChange={(v) => onUpdateTransform({ scaleX: v, scaleY: v })}
           />
-        </div>
-
-        {/* Rotation Control */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-xs font-mono text-emerald-300">
-            <label htmlFor="rotation-slider">Rotation</label>
-            <span>{transform.rotation}°</span>
-          </div>
-          <input
+          <SliderRow
             id="rotation-slider"
-            type="range"
-            min="-180"
-            max="180"
-            step="1"
+            label="Rotation"
             value={transform.rotation}
-            onChange={(e) =>
-              onUpdateTransform({
-                rotation: parseInt(e.target.value, 10),
-              })
-            }
-            className="w-full h-1.5 bg-emerald-950 rounded-lg appearance-none cursor-pointer accent-amber-400 focus:outline-none"
+            displayValue={`${Math.round(transform.rotation)}°`}
+            min={-90}
+            max={90}
+            step={0.5}
+            onChange={(v) => onUpdateTransform({ rotation: v })}
           />
-        </div>
-
-        {/* X Translation Control */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-xs font-mono text-emerald-300">
-            <label htmlFor="x-slider">X Position</label>
-            <span>{Math.round(transform.x)}px</span>
-          </div>
-          <input
+          <SliderRow
             id="x-slider"
-            type="range"
-            min="-500"
-            max="500"
-            step="1"
+            label="X Position"
             value={transform.x}
-            onChange={(e) =>
-              onUpdateTransform({
-                x: parseInt(e.target.value, 10),
-              })
-            }
-            className="w-full h-1.5 bg-emerald-950 rounded-lg appearance-none cursor-pointer accent-amber-400 focus:outline-none"
+            displayValue={`${Math.round(transform.x)}px`}
+            min={-250}
+            max={250}
+            step={0.5}
+            onChange={(v) => onUpdateTransform({ x: v })}
+          />
+          <SliderRow
+            id="y-slider"
+            label="Y Position"
+            value={transform.y}
+            displayValue={`${Math.round(transform.y)}px`}
+            min={-250}
+            max={250}
+            step={0.5}
+            onChange={(v) => onUpdateTransform({ y: v })}
           />
         </div>
 
-        {/* Y Translation Control */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-xs font-mono text-emerald-300">
-            <label htmlFor="y-slider">Y Position</label>
-            <span>{Math.round(transform.y)}px</span>
-          </div>
-          <input
-            id="y-slider"
-            type="range"
-            min="-500"
-            max="500"
-            step="1"
-            value={transform.y}
-            onChange={(e) =>
-              onUpdateTransform({
-                y: parseInt(e.target.value, 10),
-              })
-            }
-            className="w-full h-1.5 bg-emerald-950 rounded-lg appearance-none cursor-pointer accent-amber-400 focus:outline-none"
-          />
-        </div>
+        <p className="text-[10px] text-[#444] font-mono">
+          Drag directly on the canvas, or scroll to zoom.
+        </p>
       </div>
-      
-      <p className="text-[10px] text-emerald-500/70 font-mono select-none">
-        💡 Pro-Tip: You can also drag the image directly on the canvas, or use your mouse scroll wheel to zoom.
-      </p>
     </div>
   );
 }
