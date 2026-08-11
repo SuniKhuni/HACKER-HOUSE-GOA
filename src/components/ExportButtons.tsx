@@ -104,23 +104,11 @@ export default function ExportButtons({
     const generated = generateFile();
     if (!generated) { setShareMessage('Failed to generate image for sharing.'); setShareState('error'); return; }
 
-    // ── Mobile: Web Share API (can attach file + text natively) ──────────────
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    if (isMobile && navigator.share && navigator.canShare && navigator.canShare({ files: [generated.file] })) {
-      try {
-        await navigator.share({ files: [generated.file], title: 'Hacker House Goa 2026 ID Card', text: caption });
-        return;
-      } catch (err: any) {
-        if (err.name === 'AbortError') return; // user cancelled — silent exit
-        console.warn('Web Share failed, falling back to desktop flow:', err);
-      }
-    }
-
-    // ── Desktop: auto-download + copy image to clipboard + open X intent ─────
-    // Step 1: Auto-download the image so user has it locally.
+    // ── Unified Mobile & Desktop Sharing Flow ────────────────────────────────
+    // Auto-download the image first so the user definitely has a local copy
     triggerDownload(generated);
 
-    // Step 2: Copy image PNG to clipboard (modern Clipboard API).
+    // Copy the image PNG to clipboard (works on modern iOS Safari & Android Chrome/Firefox)
     let clipboardOk = false;
     try {
       if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
@@ -131,10 +119,10 @@ export default function ExportButtons({
         clipboardOk = true;
       }
     } catch (clipErr) {
-      console.warn('Clipboard image write not supported:', clipErr);
+      console.warn('Clipboard image write failed/unsupported:', clipErr);
     }
 
-    // Step 3: Open X/Twitter intent with pre-filled caption.
+    // Direct X compose intent link
     const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(caption)}`;
     window.open(xUrl, '_blank', 'noopener,noreferrer');
 
