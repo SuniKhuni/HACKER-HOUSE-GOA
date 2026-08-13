@@ -101,3 +101,72 @@ body::before {
     opacity: 1;
   }
 }
+
+/* ─── Mobile Performance Optimizations ────────────────────────────────────── */
+
+/* Smooth momentum scrolling + prevent scroll chaining */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
+}
+
+body {
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* GPU compositing for elements that animate or transform frequently */
+canvas,
+[style*="transform"],
+[style*="will-change"] {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* On mobile: reduce backdrop-blur intensity (biggest GPU perf killer) */
+@media (max-width: 768px) and (pointer: coarse) {
+  .backdrop-blur-2xl,
+  .backdrop-blur-xl {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  .backdrop-blur-md {
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+  }
+
+  /* Disable hover-scale animations on touch — they cause layout thrash */
+  .hover\:scale-105:hover,
+  .hover\:scale-110:hover {
+    transform: none !important;
+  }
+
+  /* Reduce bounce animation to simple opacity pulse — cheaper on CPU */
+  .animate-bounce {
+    animation: mobilePulse 2s ease-in-out infinite !important;
+  }
+
+  /* Simplify addPhotoGlow on mobile */
+  .animate-\[addPhotoGlow_2\.5s_ease-in-out_infinite\] {
+    animation: mobilePulse 2.5s ease-in-out infinite !important;
+  }
+}
+
+@keyframes mobilePulse {
+  0%, 100% { opacity: 0.85; }
+  50%       { opacity: 1;    }
+}
+
+/* Ensure the Konva canvas wrapper never blocks scroll */
+canvas[tabindex] {
+  touch-action: pan-y !important;
+}
+
+/* Smooth transitions for all interactive elements */
+button, a, input[type="range"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}

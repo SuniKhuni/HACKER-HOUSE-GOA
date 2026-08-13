@@ -126,7 +126,12 @@ export default function CanvasEditor({
      */
     <div
       className="relative mx-auto rounded-2xl overflow-hidden shadow-2xl bg-zinc-950 border border-emerald-950/50"
-      style={{ width: previewWidth, height: previewHeight }}
+      style={{
+        width: previewWidth,
+        height: previewHeight,
+        touchAction: 'pan-y',
+        willChange: 'transform',
+      }}
     >
       {/* Scale the Stage element via CSS so the canvas renders at full resolution */}
       <div
@@ -135,6 +140,7 @@ export default function CanvasEditor({
           height: template.height,
           transform: `scale(${scale})`,
           transformOrigin: 'top left',
+          willChange: 'transform',
         }}
       >
         <Stage
@@ -142,6 +148,17 @@ export default function CanvasEditor({
           ref={stageRef}
           width={template.width}
           height={template.height}
+          // On mobile, forward single-finger touch-moves so page scroll is not blocked
+          onTouchMove={(e: any) => {
+            if (e.evt && e.evt.touches && e.evt.touches.length === 1) {
+              const target = e.target;
+              const isDraggingImage = target && typeof target.draggable === 'function' && target.draggable();
+              if (!isDraggingImage) {
+                // Not dragging an image — allow browser to scroll
+                e.evt.stopPropagation && e.evt.stopPropagation();
+              }
+            }
+          }}
         >
         {/* Layer 1: Background */}
         <Layer>

@@ -159,7 +159,8 @@ export default function ScrollAnimationHero({ generatorId }: ScrollAnimationHero
           trigger: document.body,
           start: 'top top',
           end: 'bottom bottom',
-          scrub: 0.5,
+          // Slightly lower scrub = faster response on mobile
+          scrub: 0.3,
           onUpdate: () => {
             const frameIndex = Math.round(animationObj.frame);
             currentFrameRef.current = frameIndex;
@@ -208,7 +209,11 @@ export default function ScrollAnimationHero({ generatorId }: ScrollAnimationHero
     <>
       {/* Fixed Full-Screen Background Canvas */}
       <div className="fixed inset-0 w-full h-full z-0 bg-black pointer-events-none">
-        <canvas ref={canvasRef} className="w-full h-full object-cover block" />
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full object-cover block"
+          style={{ willChange: 'contents', imageRendering: 'auto' }}
+        />
       </div>
 
       {/* Audio element */}
@@ -221,7 +226,11 @@ export default function ScrollAnimationHero({ generatorId }: ScrollAnimationHero
       >
         <div
           ref={contentRef}
-          style={{ opacity: logoOpacity, transform: `translateY(${logoY}px)` }}
+          style={{
+            opacity: logoOpacity,
+            transform: `translateY(${logoY}px)`,
+            willChange: 'transform, opacity',
+          }}
           className="flex flex-col items-center justify-center text-center pointer-events-none w-full"
         >
           {/* Logo */}
@@ -306,11 +315,11 @@ export default function ScrollAnimationHero({ generatorId }: ScrollAnimationHero
           </div>
         </div>
 
-        {/* Scroll Indicator */}
+        {/* Scroll Indicator — positioned high enough to be visible on all mobile screen heights */}
         {isLoaded && (
           <div
             style={{ opacity: logoOpacity }}
-            className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-1 animate-bounce text-emerald-400 drop-shadow-[0_2px_8px_rgba(10,24,19,0.9)] pointer-events-none"
+            className="absolute bottom-[18vh] sm:bottom-[14vh] md:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-1 animate-bounce text-emerald-400 drop-shadow-[0_2px_8px_rgba(10,24,19,0.9)] pointer-events-none"
           >
             <span className="text-[9px] font-mono uppercase tracking-widest font-bold">SCROLL TO EXPLORE</span>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
