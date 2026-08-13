@@ -49,6 +49,8 @@ export default function Generator() {
   const previewContainerRef = useRef<HTMLDivElement>(null);
   
   const stageRef = useRef<any>(null);
+  // Refs to hidden <input type="file"> elements for the canvas overlay "Add Photo" buttons
+  const fileInputRefs = useRef<Array<HTMLInputElement | null>>([null, null, null]);
 
   // Core members state (store up to 3 members to reuse data when swapping templates)
   const [members, setMembers] = useState<Member[]>([
@@ -77,6 +79,9 @@ export default function Generator() {
       transform: { x: 0, y: 0, scaleX: 1, scaleY: 1, rotation: 0 },
     },
   ]);
+
+  // Store natural image dimensions per member so we can compute fitScale for the slider
+  const [imageDimensions, setImageDimensions] = useState<Record<number, { w: number; h: number }>>({});
 
   // Lookup currently selected template config
   const activeTemplate = TEMPLATES.find((t) => t.id === selectedTemplateId) || TEMPLATES[0];
@@ -136,6 +141,9 @@ export default function Generator() {
       const slot = activeTemplate.photoAreas[index] || activeTemplate.photoAreas[0];
       const defaultTransform = getDefaultTransform(img.width, img.height, slot.width, slot.height);
       
+      // Store natural dimensions so ImageControls can compute proper fitScale
+      setImageDimensions((prev) => ({ ...prev, [index]: { w: img.width, h: img.height } }));
+
       setMembers((prev) =>
         prev.map((m, idx) =>
           idx === index
@@ -153,6 +161,7 @@ export default function Generator() {
 
   // Helper to clear an image slot
   const handleImageCleared = (index: number) => {
+    setImageDimensions((prev) => { const next = { ...prev }; delete next[index]; return next; });
     setMembers((prev) =>
       prev.map((m, idx) =>
         idx === index
@@ -182,9 +191,54 @@ export default function Generator() {
   };
 
   const handleUpdateMember = (index: number, updates: Partial<Member>) => {
+    // When a new image URL is being set, auto-compute the covering+centering transform.
+    // This fixes images appearing at top-left: the forms call handleUpdateMember directly,
+    // not handleImageUploaded, so we must compute the transform here.
+    if (updates.imageUrl && updates.imageUrl !== members[index]?.imageUrl) {
+      const imgEl = new window.Image();
+      imgEl.src = updates.imageUrl;
+      imgEl.onload = () => {
+        const slot = activeTemplate.photoAreas[index] || activeTemplate.photoAreas[0];
+        const defaultTransform = getDefaultTransform(imgEl.width, imgEl.height, slot.width, slot.height);
+        setImageDimensions((prev) => ({ ...prev, [index]: { w: imgEl.width, h: imgEl.height } }));
+        setMembers((prev) =>
+          prev.map((m, idx) =>
+            idx === index ? { ...m, ...updates, transform: defaultTransform } : m
+          )
+        );
+      };
+      return; // async path; state update happens in onload
+    }
+    // When image is cleared, also remove stored dimensions
+    if ('imageUrl' in updates && updates.imageUrl === null) {
+      setImageDimensions((prev) => { const next = { ...prev }; delete next[index]; return next; });
+    }
     setMembers((prev) =>
       prev.map((m, idx) => (idx === index ? { ...m, ...updates } : m))
     );
+  };
+
+  // Handler for file picked via the canvas overlay "Add Photo" button
+  const handleOverlayFileChange = async (index: number, file: File) => {
+    const fileType = file.name.split('.').pop()?.toLowerCase();
+    let finalFile = file;
+    if (fileType === 'heic') {
+      try {
+        const heic2any = (await import('heic2any')).default;
+        const result = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.8 });
+        const blob = Array.isArray(result) ? result[0] : result;
+        finalFile = new File([blob], file.name.replace(/\.heic$/i, '.jpg'), { type: 'image/jpeg' });
+      } catch (e) {
+        console.error('HEIC conversion failed', e);
+      }
+    }
+    const url = URL.createObjectURL(finalFile);
+    // Select this member when uploading via canvas
+    setActiveMemberIndex(index);
+    // handleUpdateMember will auto-compute the centering transform
+    handleUpdateMember(index, { imageFile: finalFile, imageUrl: url });
+    // Reset input so the same file can be re-selected
+    if (fileInputRefs.current[index]) fileInputRefs.current[index]!.value = '';
   };
 
   // RESET TRIGGERS:
@@ -269,23 +323,122 @@ export default function Generator() {
     .slice(0, displayCount)
     .every((m) => !!m.name.trim() && !!m.role.trim());
 
+  // Compute fitScale for the active member's image + slot (used by ImageControls zoom slider)
+  const activeMemberSlot = activeTemplate.photoAreas[activeMemberIndex];
+  const activeDims = imageDimensions[activeMemberIndex];
+  const activeFitScale = activeDims && activeMemberSlot
+    ? Math.max(activeMemberSlot.width / activeDims.w, activeMemberSlot.height / activeDims.h)
+    : 1;
+
+  // X/Y position slider range: roughly half the slot dimension so you can pan edge-to-edge
+  const posRangeX = activeMemberSlot ? Math.round(activeMemberSlot.width * 0.75) : 250;
+  const posRangeY = activeMemberSlot ? Math.round(activeMemberSlot.height * 0.75) : 250;
+
+  // Whether the active member has an image (controls conditional rendering)
+  const activeHasImage = !!members[activeMemberIndex]?.imageUrl;
+
+  // Preview canvas dimensions (used for overlay button positioning)
+  const previewHeight = Math.round(previewWidth * (activeTemplate.height / activeTemplate.width));
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
-      {/* LEFT COLUMN: LIVE CANVAS PREVIEW & EXPORT ACTIONS */}
+      {/* ──────────────────────────────────────────────────────────────── */}
+      {/* LEFT COLUMN (desktop) / TOP SECTION (mobile): CANVAS + EXPORT  */}
+      {/* ──────────────────────────────────────────────────────────────── */}
       <div className="md:col-span-7 lg:col-span-8 flex flex-col items-center space-y-4">
         <div ref={previewContainerRef} className="w-full flex justify-center items-center">
-          <CanvasEditor
-            template={activeTemplate}
-            members={members.slice(0, displayCount)}
-            teamName={teamName}
-            activeMemberIndex={activeMemberIndex}
-            selectedFont={selectedFont}
-            stageRef={stageRef}
-            onUpdateMemberTransform={handleUpdateMemberTransform}
-            onSelectMember={setActiveMemberIndex}
-            previewWidth={previewWidth}
-          />
+          {/* Relative wrapper so overlay buttons sit precisely over the canvas slots */}
+          <div className="relative" style={{ width: previewWidth, height: previewHeight > 0 ? previewHeight : undefined }}>
+            <CanvasEditor
+              template={activeTemplate}
+              members={members.slice(0, displayCount)}
+              teamName={teamName}
+              activeMemberIndex={activeMemberIndex}
+              selectedFont={selectedFont}
+              stageRef={stageRef}
+              onUpdateMemberTransform={handleUpdateMemberTransform}
+              onSelectMember={setActiveMemberIndex}
+              previewWidth={previewWidth}
+            />
+
+            {/* ── Glowing "Add Photo" overlay buttons (one per empty slot) ── */}
+            {activeTemplate.photoAreas.slice(0, displayCount).map((area, idx) => {
+              if (members[idx]?.imageUrl) return null; // slot already filled
+              const canvasScale = previewWidth / activeTemplate.width;
+              return (
+                <React.Fragment key={area.id}>
+                  {/* Overlay region matching the slot */}
+                  <div
+                    className="absolute flex items-center justify-center pointer-events-none"
+                    style={{
+                      left: area.x * canvasScale,
+                      top: area.y * canvasScale,
+                      width: area.width * canvasScale,
+                      height: area.height * canvasScale,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      id={`add-photo-overlay-${idx}`}
+                      aria-label={`Add photo for member ${idx + 1}`}
+                      onClick={() => fileInputRefs.current[idx]?.click()}
+                      className="pointer-events-auto group flex flex-col items-center gap-2 px-5 py-3.5 rounded-2xl
+                        bg-black/50 backdrop-blur-md
+                        border border-amber-400/50 hover:border-amber-300
+                        shadow-[0_0_18px_rgba(245,158,11,0.35),inset_0_0_18px_rgba(245,158,11,0.06)]
+                        hover:shadow-[0_0_40px_rgba(245,158,11,0.65),inset_0_0_28px_rgba(245,158,11,0.14)]
+                        text-amber-300 hover:text-amber-100
+                        transition-all duration-300 cursor-pointer
+                        animate-[addPhotoGlow_2.5s_ease-in-out_infinite]
+                        hover:scale-105 active:scale-95"
+                    >
+                      {/* Camera icon */}
+                      <svg className="w-6 h-6 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                      <span className="text-[11px] font-bold tracking-[0.18em] uppercase drop-shadow-[0_0_6px_rgba(245,158,11,0.7)]">
+                        {displayCount > 1 ? `Member ${idx + 1}` : 'Add Photo'}
+                      </span>
+                      {displayCount > 1 && (
+                        <span className="text-[9px] font-mono tracking-widest text-amber-400/70">tap to upload</span>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Hidden file input for this slot */}
+                  <input
+                    ref={(el) => { fileInputRefs.current[idx] = el; }}
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.heic"
+                    className="hidden"
+                    aria-hidden="true"
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) handleOverlayFileChange(idx, e.target.files[0]);
+                    }}
+                  />
+                </React.Fragment>
+              );
+            })}
+          </div>
         </div>
+
+        {/* ── MOBILE-ONLY: Image Controls directly below canvas ── */}
+        {activeHasImage && (
+          <div className="w-full md:hidden">
+            <ImageControls
+              memberName={
+                isSolo ? members[0].name : members[activeMemberIndex].name || `Member ${activeMemberIndex + 1}`
+              }
+              transform={members[activeMemberIndex].transform}
+              fitScale={activeFitScale}
+              posRangeX={posRangeX}
+              posRangeY={posRangeY}
+              onUpdateTransform={(updates) => handleUpdateMemberTransform(activeMemberIndex, updates)}
+              onReset={handleResetActivePhoto}
+            />
+          </div>
+        )}
 
         {/* Export and Share Actions */}
         <div className="w-full max-w-[500px] px-1">
@@ -328,7 +481,9 @@ export default function Generator() {
         </div>
       </div>
 
-      {/* RIGHT COLUMN: DARK UI CARDS */}
+      {/* ──────────────────────────────────────────────────────── */}
+      {/* RIGHT COLUMN (desktop) / BOTTOM SECTION (mobile): CARDS */}
+      {/* ──────────────────────────────────────────────────────── */}
       <div className="md:col-span-5 lg:col-span-4 space-y-3">
 
         {/* ── Card 1: Layout & Format ── */}
@@ -445,16 +600,21 @@ export default function Generator() {
           </div>
         </div>
 
-        {/* ── Card 3: Composition Controls (Conditional) ── */}
-        {members[activeMemberIndex]?.imageUrl && (
-          <ImageControls
-            memberName={
-              isSolo ? members[0].name : members[activeMemberIndex].name || `Member ${activeMemberIndex + 1}`
-            }
-            transform={members[activeMemberIndex].transform}
-            onUpdateTransform={(updates) => handleUpdateMemberTransform(activeMemberIndex, updates)}
-            onReset={handleResetActivePhoto}
-          />
+        {/* ── Card 3: Composition Controls — DESKTOP ONLY (mobile version is above canvas) ── */}
+        {activeHasImage && (
+          <div className="hidden md:block">
+            <ImageControls
+              memberName={
+                isSolo ? members[0].name : members[activeMemberIndex].name || `Member ${activeMemberIndex + 1}`
+              }
+              transform={members[activeMemberIndex].transform}
+              fitScale={activeFitScale}
+              posRangeX={posRangeX}
+              posRangeY={posRangeY}
+              onUpdateTransform={(updates) => handleUpdateMemberTransform(activeMemberIndex, updates)}
+              onReset={handleResetActivePhoto}
+            />
+          </div>
         )}
       </div>
     </div>

@@ -6,6 +6,12 @@ import { ImageTransform } from '../types/generator';
 interface ImageControlsProps {
   memberName: string;
   transform: ImageTransform;
+  /** The scale that makes the image exactly cover the slot (from getDefaultTransform). Used to compute slider range. */
+  fitScale: number;
+  /** Half-width of the slot in px — used as the ±range for the X position slider. */
+  posRangeX?: number;
+  /** Half-height of the slot in px — used as the ±range for the Y position slider. */
+  posRangeY?: number;
   onUpdateTransform: (updates: Partial<ImageTransform>) => void;
   onReset: () => void;
 }
@@ -84,9 +90,21 @@ function SliderRow({
 export default function ImageControls({
   memberName,
   transform,
+  fitScale,
+  posRangeX = 250,
+  posRangeY = 250,
   onUpdateTransform,
   onReset,
 }: ImageControlsProps) {
+  // Zoom range: allow zooming out to 40% of fit (so image can always be shrunk below fill)
+  // and up to 4× fit for tight crops. Rounded to avoid floating point noise.
+  const zoomMin = Math.max(0.05, parseFloat((fitScale * 0.4).toFixed(3)));
+  const zoomMax = parseFloat((fitScale * 4).toFixed(3));
+  // Clamp displayed value inside range so fill percentage stays 0–100%
+  const clampedScale = Math.min(zoomMax, Math.max(zoomMin, transform.scaleX));
+  // Clamp x/y values for the fill indicator (actual value can go out of range via drag)
+  const clampedX = Math.min(posRangeX, Math.max(-posRangeX, transform.x));
+  const clampedY = Math.min(posRangeY, Math.max(-posRangeY, transform.y));
   return (
     <div className="rounded-2xl bg-black/55 backdrop-blur-2xl border border-white/[0.10] shadow-2xl overflow-hidden">
       {/* Card Header */}
@@ -120,11 +138,11 @@ export default function ImageControls({
           <SliderRow
             id="scale-slider"
             label="Zoom"
-            value={transform.scaleX}
+            value={clampedScale}
             displayValue={`${transform.scaleX.toFixed(2)}×`}
-            min={0.5}
-            max={3}
-            step={0.005}
+            min={zoomMin}
+            max={zoomMax}
+            step={parseFloat((fitScale * 0.005).toFixed(4))}
             onChange={(v) => onUpdateTransform({ scaleX: v, scaleY: v })}
           />
           <SliderRow
@@ -140,20 +158,20 @@ export default function ImageControls({
           <SliderRow
             id="x-slider"
             label="X Position"
-            value={transform.x}
+            value={clampedX}
             displayValue={`${Math.round(transform.x)}px`}
-            min={-250}
-            max={250}
+            min={-posRangeX}
+            max={posRangeX}
             step={0.5}
             onChange={(v) => onUpdateTransform({ x: v })}
           />
           <SliderRow
             id="y-slider"
             label="Y Position"
-            value={transform.y}
+            value={clampedY}
             displayValue={`${Math.round(transform.y)}px`}
-            min={-250}
-            max={250}
+            min={-posRangeY}
+            max={posRangeY}
             step={0.5}
             onChange={(v) => onUpdateTransform({ y: v })}
           />
