@@ -361,10 +361,14 @@ export default function Generator() {
               previewWidth={previewWidth}
             />
 
-            {/* ── Glowing "Add Photo" overlay buttons (one per empty slot) ── */}
+            {/* ── "Add Photo" overlay buttons — proportionally sized to each slot ── */}
             {activeTemplate.photoAreas.slice(0, displayCount).map((area, idx) => {
               if (members[idx]?.imageUrl) return null; // slot already filled
               const canvasScale = previewWidth / activeTemplate.width;
+              // Slot pixel size in preview space — used to pick compact vs full layout
+              const slotPxW = area.width * canvasScale;
+              // Compact mode for slots narrower than ~120px (team frames on mobile)
+              const compact = slotPxW < 120;
               return (
                 <React.Fragment key={area.id}>
                   {/* Overlay region matching the slot */}
@@ -377,31 +381,56 @@ export default function Generator() {
                       height: area.height * canvasScale,
                     }}
                   >
+                    {/*
+                     * Button fills 82% of the slot in both dimensions so it is always
+                     * proportional — tiny on small team slots, comfortable on solo slots.
+                     * Font/icon sizes use clamp() to scale fluidly with the slot.
+                     */}
                     <button
                       type="button"
                       id={`add-photo-overlay-${idx}`}
                       aria-label={`Add photo for member ${idx + 1}`}
                       onClick={() => fileInputRefs.current[idx]?.click()}
-                      className="pointer-events-auto group flex flex-col items-center gap-2 px-5 py-3.5 rounded-2xl
-                        bg-black/50 backdrop-blur-md
-                        border border-amber-400/50 hover:border-amber-300
-                        shadow-[0_0_18px_rgba(245,158,11,0.35),inset_0_0_18px_rgba(245,158,11,0.06)]
-                        hover:shadow-[0_0_40px_rgba(245,158,11,0.65),inset_0_0_28px_rgba(245,158,11,0.14)]
+                      className="upload-btn-shimmer pointer-events-auto flex flex-col items-center justify-center
+                        w-[82%] h-[82%] rounded-xl
+                        bg-black/55 border border-amber-400/55
+                        shadow-[0_0_12px_rgba(245,158,11,0.3),inset_0_0_10px_rgba(245,158,11,0.05)]
+                        hover:border-amber-300
+                        hover:shadow-[0_0_28px_rgba(245,158,11,0.6),inset_0_0_18px_rgba(245,158,11,0.12)]
                         text-amber-300 hover:text-amber-100
-                        transition-all duration-300 cursor-pointer
-                        animate-[addPhotoGlow_2.5s_ease-in-out_infinite]
-                        hover:scale-105 active:scale-95"
+                        transition-shadow duration-300 cursor-pointer overflow-hidden"
+                      style={{ gap: compact ? '4%' : '6%' }}
                     >
-                      {/* Camera icon */}
-                      <svg className="w-6 h-6 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      {/* Camera icon — width/height scale with slot via clamp */}
+                      <svg
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+                        className="shrink-0 drop-shadow-[0_0_5px_rgba(245,158,11,0.7)]"
+                        style={{
+                          width:  `clamp(12px, ${compact ? 28 : 22}%, 26px)`,
+                          height: `clamp(12px, ${compact ? 28 : 22}%, 26px)`,
+                        }}
+                      >
                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                         <circle cx="12" cy="13" r="4" />
                       </svg>
-                      <span className="text-[11px] font-bold tracking-[0.18em] uppercase drop-shadow-[0_0_6px_rgba(245,158,11,0.7)]">
-                        {displayCount > 1 ? `Member ${idx + 1}` : 'Add Photo'}
+
+                      {/* Label — clamp keeps it readable at any slot size */}
+                      <span
+                        className="font-bold tracking-[0.12em] uppercase text-center leading-tight drop-shadow-[0_0_4px_rgba(245,158,11,0.6)]"
+                        style={{ fontSize: `clamp(6px, ${compact ? 11 : 9}%, 13px)` }}
+                      >
+                        {displayCount > 1 ? `M${idx + 1}` : 'Add Photo'}
                       </span>
-                      {displayCount > 1 && (
-                        <span className="text-[9px] font-mono tracking-widest text-amber-400/70">tap to upload</span>
+
+                      {/* Sub-label — only shown when slot is wide enough */}
+                      {!compact && (
+                        <span
+                          className="font-mono tracking-widest text-amber-400/65 text-center"
+                          style={{ fontSize: 'clamp(5px, 7%, 9px)' }}
+                        >
+                          tap to upload
+                        </span>
                       )}
                     </button>
                   </div>

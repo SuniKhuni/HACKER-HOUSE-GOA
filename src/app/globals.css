@@ -88,17 +88,58 @@ body::before {
   background: rgba(251, 191, 36, 0.8);
 }
 
-/* "Add Photo" canvas overlay button glow pulse animation */
-@keyframes addPhotoGlow {
+/* ─── "Add Photo" overlay button: shimmer sweep + border pulse ─────────────── */
+
+/*
+ * Shimmer sweep: a diagonal golden highlight that slides across the button
+ * every 2.4s. Uses ::before so it doesn't affect layout at all.
+ */
+.upload-btn-shimmer {
+  position: relative;
+}
+
+.upload-btn-shimmer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    108deg,
+    transparent 0%,
+    rgba(245, 158, 11, 0.0)  35%,
+    rgba(245, 158, 11, 0.22) 50%,
+    rgba(245, 158, 11, 0.0)  65%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-position: -100% 0;
+  animation: shimmerSweep 2.4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* The border itself breathes with a subtle amber glow */
+.upload-btn-shimmer {
+  animation: uploadBorderPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes shimmerSweep {
+  0%       { background-position: -100% 0; }
+  55%, 100% { background-position: 200% 0; }
+}
+
+@keyframes uploadBorderPulse {
   0%, 100% {
-    box-shadow: 0 0 14px rgba(245, 158, 11, 0.35), inset 0 0 14px rgba(245, 158, 11, 0.06);
-    transform: scale(1);
-    opacity: 0.92;
+    box-shadow:
+      0 0  8px rgba(245, 158, 11, 0.25),
+      inset 0 0  8px rgba(245, 158, 11, 0.04);
+    border-color: rgba(245, 158, 11, 0.50);
   }
   50% {
-    box-shadow: 0 0 32px rgba(245, 158, 11, 0.7), inset 0 0 24px rgba(245, 158, 11, 0.14);
-    transform: scale(1.03);
-    opacity: 1;
+    box-shadow:
+      0 0 22px rgba(245, 158, 11, 0.60),
+      inset 0 0 14px rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.85);
   }
 }
 
@@ -147,11 +188,6 @@ canvas,
   /* Reduce bounce animation to simple opacity pulse — cheaper on CPU */
   .animate-bounce {
     animation: mobilePulse 2s ease-in-out infinite !important;
-  }
-
-  /* Simplify addPhotoGlow on mobile */
-  .animate-\[addPhotoGlow_2\.5s_ease-in-out_infinite\] {
-    animation: mobilePulse 2.5s ease-in-out infinite !important;
   }
 }
 
