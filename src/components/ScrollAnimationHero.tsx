@@ -22,6 +22,7 @@ export default function ScrollAnimationHero({ generatorId }: ScrollAnimationHero
   const [scrollY, setScrollY] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
   const [showMusicHint, setShowMusicHint] = useState(true);
+  const [coconutPos, setCoconutPos] = useState<{ left: number; top: number } | null>(null);
 
   const loadedImagesRef = useRef<(HTMLImageElement | null)[]>([]);
   const currentFrameRef = useRef<number>(0);
@@ -112,6 +113,28 @@ export default function ScrollAnimationHero({ generatorId }: ScrollAnimationHero
     ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
   };
 
+  // Fraction of source image where the watermark sits (boy's hand, bottom-right).
+  // These match the same cover-fit math as drawCover so position is viewport-invariant.
+  const WM_FRAC_X = 0.87;
+  const WM_FRAC_Y = 0.875;
+
+  const recalcCoconut = () => {
+    const img = loadedImagesRef.current[0];
+    if (!img) return;
+    const vpW = window.innerWidth;
+    const vpH = window.innerHeight;
+    const imgW = img.naturalWidth;
+    const imgH = img.naturalHeight;
+    const scale = Math.max(vpW / imgW, vpH / imgH);
+    const drawnW = imgW * scale;
+    const drawnH = imgH * scale;
+    const offsetX = (vpW - drawnW) / 2;
+    const offsetY = (vpH - drawnH) / 2;
+    const cx = offsetX + WM_FRAC_X * drawnW + 70;
+    const cy = offsetY + WM_FRAC_Y * drawnH - 50;
+    setCoconutPos({ left: cx, top: cy });
+  };
+
   const renderCanvas = (imageIndex: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -131,6 +154,12 @@ export default function ScrollAnimationHero({ generatorId }: ScrollAnimationHero
     if (targetImg) drawCover(canvas, ctx, targetImg);
   };
 
+  // Recalculate coconut position whenever first frame is ready
+  useEffect(() => {
+    if (firstFrameLoaded) recalcCoconut();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firstFrameLoaded]);
+
   useEffect(() => {
     const handleResize = () => {
       const canvas = canvasRef.current;
@@ -139,6 +168,7 @@ export default function ScrollAnimationHero({ generatorId }: ScrollAnimationHero
       canvas.width = window.innerWidth * dpr;
       canvas.height = window.innerHeight * dpr;
       renderCanvas(currentFrameRef.current);
+      recalcCoconut();
     };
     window.addEventListener('resize', handleResize);
     handleResize();
@@ -327,7 +357,31 @@ export default function ScrollAnimationHero({ generatorId }: ScrollAnimationHero
             </svg>
           </div>
         )}
+
+        {/* Coconut overlay — static cover for the bottom-right watermark.
+            Fixed to viewport so it stays locked throughout the full scroll animation.
+            Hidden on mobile where the boy illustration isn't visible. */}
       </div>
+
+      {/* Coconut — dynamically positioned to track the watermark in the cover-fit canvas.
+          Uses the same scale/offset math as drawCover so it stays locked at any viewport ratio. */}
+      {coconutPos && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src="/coconut.png"
+          alt=""
+          aria-hidden="true"
+          className="hidden md:block fixed pointer-events-none"
+          style={{
+            left: coconutPos.left,
+            top: coconutPos.top,
+            transform: 'translate(-50%, -50%)',
+            width: 'clamp(75px, 7.5vw, 115px)',
+            zIndex: 15,
+            objectFit: 'contain',
+          }}
+        />
+      )}
     </>
   );
 }
